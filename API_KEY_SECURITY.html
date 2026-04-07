@@ -1,0 +1,161 @@
+<h1 id="api-key-security-setup-guide">API Key Security Setup Guide</h1>
+<h2 id="problem">Problem</h2>
+<p>Your Google Maps API key is exposed in source code:</p>
+<pre><code>lib/const/google_map_key.dart</code></pre>
+<p>Anyone can extract it from APK/GitHub and drain your quota.</p>
+<hr />
+<h2 id="immediate-action-restrict-your-current-key">Immediate Action:
+Restrict Your Current Key</h2>
+<h3 id="step-1-go-to-gcp-console">Step 1: Go to GCP Console</h3>
+<ol type="1">
+<li>Open https://console.cloud.google.com</li>
+<li>Go to <strong>APIs &amp; Services</strong> →
+<strong>Credentials</strong></li>
+<li>Find key: <code>AIzaSyBv5ZleG1nnsiUn-YSSXeZ9MFzFYztimug</code></li>
+</ol>
+<h3 id="step-2-set-application-restrictions">Step 2: Set Application
+Restrictions</h3>
+<h4 id="for-android">For Android:</h4>
+<ol type="1">
+<li>Click the key</li>
+<li>Go to <strong>Application restrictions</strong></li>
+<li>Select <strong>Android apps</strong></li>
+<li>Click <strong>ADD AN ITEM</strong></li>
+<li>Enter your package name (in <code>android/app/build.gradle</code>)
+<ul>
+<li>Example: <code>com.your_company.app</code></li>
+</ul></li>
+<li>Enter your <strong>SHA-1 certificate fingerprint</strong></li>
+</ol>
+<p><strong>Get SHA-1:</strong></p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> android</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="ex">./gradlew</span> signingReport</span></code></pre></div>
+<h4 id="for-ios">For iOS:</h4>
+<ol type="1">
+<li>Go to <strong>Application restrictions</strong></li>
+<li>Select <strong>iOS apps</strong></li>
+<li>Enter your <strong>Bundle ID</strong> (in
+<code>ios/Runner/Info.plist</code>)</li>
+</ol>
+<h4 id="for-web">For Web:</h4>
+<ol type="1">
+<li>Go to <strong>API restrictions</strong></li>
+<li>Select <strong>Maps SDK</strong></li>
+<li>Add your domain:
+<ul>
+<li>Example: <code>yourdomain.com</code></li>
+<li>Development: <code>localhost</code></li>
+</ul></li>
+</ol>
+<h3 id="step-3-remove-from-source-code">Step 3: Remove from Source
+Code</h3>
+<p><strong>Before committing, delete:</strong></p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode dart"><code class="sourceCode dart"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co">// lib/const/google_map_key.dart - DELETE THIS FILE</span></span></code></pre></div>
+<hr />
+<h2 id="recommended-use-firebase-for-api-key-management">Recommended:
+Use Firebase for API Key Management</h2>
+<h3 id="option-a-firebase-remote-config-best">Option A: Firebase Remote
+Config (Best)</h3>
+<ol type="1">
+<li>Go to Firebase Console → Remote Config</li>
+<li>Create parameter: <code>google_maps_api_key</code></li>
+<li>Set value to your API key</li>
+<li>Update app to fetch from Firebase:</li>
+</ol>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode dart"><code class="sourceCode dart"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co">// lib/const/google_map_key.dart</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span> <span class="st">&#39;package:firebase_remote_config/firebase_remote_config.dart&#39;</span>;</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> GoogleMapKey <span class="op">{</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">static</span> <span class="dt">Future</span><span class="op">&lt;</span><span class="dt">String</span><span class="op">&gt;</span> getGmaKey() <span class="at">async</span> <span class="op">{</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">final</span> remoteConfig <span class="op">=</span> FirebaseRemoteConfig<span class="op">.</span>instance;</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">await</span> remoteConfig<span class="op">.</span>fetchAndActivate();</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>    <span class="kw">return</span> remoteConfig<span class="op">.</span>getString(<span class="st">&#39;google_maps_api_key&#39;</span>);</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<h3 id="option-b-backend-server-most-secure">Option B: Backend Server
+(Most Secure)</h3>
+<p>Create endpoint on your backend:</p>
+<pre><code>GET /api/maps-key
+Returns: { &quot;key&quot;: &quot;AIzaSy...&quot; }</code></pre>
+<p>Then fetch in app:</p>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode dart"><code class="sourceCode dart"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> GoogleMapKey <span class="op">{</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">static</span> <span class="dt">Future</span><span class="op">&lt;</span><span class="dt">String</span><span class="op">&gt;</span> getGmaKey() <span class="at">async</span> <span class="op">{</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">final</span> response <span class="op">=</span> <span class="at">await</span> http<span class="op">.</span><span class="kw">get</span>(Uri<span class="op">.</span>parse(<span class="st">&#39;YOUR_BACKEND/api/maps-key&#39;</span>));</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">return</span> jsonDecode(response<span class="op">.</span>body)[<span class="st">&#39;key&#39;</span>];</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<hr />
+<h2 id="quick-checklist">Quick Checklist</h2>
+<ul class="task-list">
+<li><p><label><input type="checkbox" />Restricted API key to Android app
+only</label></p></li>
+<li><p><label><input type="checkbox" />Added SHA-1 certificate
+fingerprint</label></p></li>
+<li><p><label><input type="checkbox" />Removed key from source
+code</label></p></li>
+<li><p><label><input type="checkbox" />Set up billing alerts ($100
+limit)</label></p></li>
+<li><p><label><input type="checkbox" />Deleted
+<code>google_map_key.dart</code> from repository</label></p></li>
+<li><p><label><input type="checkbox" />Added file to
+<code>.gitignore</code>:</label></p>
+<pre><code>lib/const/google_map_key.dart</code></pre></li>
+</ul>
+<hr />
+<h2 id="estimated-time-per-user">Estimated Time per User</h2>
+<table>
+<thead>
+<tr>
+<th>Action</th>
+<th>Time</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Set API restrictions</td>
+<td>5 min</td>
+</tr>
+<tr>
+<td>Get SHA-1 fingerprint</td>
+<td>2 min</td>
+</tr>
+<tr>
+<td>Remove from code</td>
+<td>2 min</td>
+</tr>
+<tr>
+<td>Set up billing alerts</td>
+<td>3 min</td>
+</tr>
+<tr>
+<td><strong>Total</strong></td>
+<td><strong>12 min</strong></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="verify-it-works">Verify It Works</h2>
+<ol type="1">
+<li>Run app: <code>flutter run</code></li>
+<li>Open Google Maps screen</li>
+<li>Check map loads normally</li>
+<li>Go to GCP Console → Maps API usage</li>
+<li>Verify calls are being counted</li>
+</ol>
+<hr />
+<h2 id="reference-links">Reference Links</h2>
+<ul>
+<li><strong>Secure Keys</strong>:
+https://cloud.google.com/docs/authentication/api-keys</li>
+<li><strong>API Restrictions</strong>:
+https://cloud.google.com/docs/authentication/restrict-public-api-key</li>
+<li><strong>Android SHA-1</strong>:
+https://developers.google.com/android/guides/client-auth</li>
+<li><strong>Firebase Remote Config</strong>:
+https://firebase.google.com/docs/remote-config</li>
+</ul>
+<p><em>Recommended Action: Complete all steps within 24 hours</em></p>

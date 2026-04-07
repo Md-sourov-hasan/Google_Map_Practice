@@ -1,0 +1,269 @@
+<h1 id="google-maps-api-cost-documentation">Google Maps API Cost
+Documentation</h1>
+<h2 id="overview">Overview</h2>
+<p>This Flutter app uses Google Maps SDK to display current location on
+Android, iOS, and Web platforms.</p>
+<hr />
+<h2 id="api-billing-breakdown">API Billing Breakdown</h2>
+<h3 id="current-implementation">Current Implementation</h3>
+<ul>
+<li><strong>SKU</strong>: Maps SDK (Dynamic Maps Loads)</li>
+<li><strong>Trigger</strong>: Every time <code>GoogleMap</code> widget
+loads</li>
+<li><strong>Free Tier</strong>: First 10,000 loads/month</li>
+</ul>
+<h3 id="pricing-pay-as-you-go">Pricing (Pay-as-you-go)</h3>
+<table>
+<thead>
+<tr>
+<th>Monthly Loads</th>
+<th>Price per 1,000</th>
+<th>Cost per Load</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1 - 10,000</td>
+<td>$0</td>
+<td>$0 (FREE)</td>
+</tr>
+<tr>
+<td>10,001 - 100,000</td>
+<td>$7.00</td>
+<td>$0.007</td>
+</tr>
+<tr>
+<td>100,001 - 500,000</td>
+<td>$5.60</td>
+<td>$0.0056</td>
+</tr>
+<tr>
+<td>500,001 - 5M</td>
+<td>$4.20</td>
+<td>$0.0042</td>
+</tr>
+<tr>
+<td>5M+</td>
+<td>$0.53</td>
+<td>$0.00053</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="cost-examples-20000-users">Cost Examples (20,000 Users)</h2>
+<h3 id="scenario-1-users-open-app-1xday">Scenario 1: Users open app
+1x/day</h3>
+<pre><code>Daily Loads: 20,000
+Monthly Loads: 600,000
+Monthly Cost: $3,290
+Annual Cost: $39,480</code></pre>
+<h3 id="scenario-2-users-open-app-5xday">Scenario 2: Users open app
+5x/day</h3>
+<pre><code>Daily Loads: 100,000
+Monthly Loads: 3,000,000
+Monthly Cost: $13,370
+Annual Cost: $160,440</code></pre>
+<h3 id="scenario-3-subscription-plan">Scenario 3: Subscription Plan</h3>
+<table>
+<thead>
+<tr>
+<th>Plan</th>
+<th>Monthly</th>
+<th>Included Calls</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Starter</td>
+<td>$100</td>
+<td>50,000</td>
+</tr>
+<tr>
+<td>Essentials</td>
+<td>$275</td>
+<td>100,000</td>
+</tr>
+<tr>
+<td>Pro</td>
+<td>$1,200</td>
+<td>250,000</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="current-files">Current Files</h2>
+<h3 id="core-implementation">Core Implementation</h3>
+<ul>
+<li><strong>Main Screen</strong>:
+<code>lib/current_adress/google_maps_screen.dart</code></li>
+<li><strong>API Key</strong>: <code>lib/const/google_map_key.dart</code>
+⚠️ <strong>EXPOSED</strong></li>
+<li><strong>Dependencies</strong>: <code>pubspec.yaml</code></li>
+</ul>
+<h3 id="key-components">Key Components</h3>
+<ol type="1">
+<li><strong>GoogleMapController</strong> - Controls map
+interactions</li>
+<li><strong>LatLng</strong> - Current user location</li>
+<li><strong>Marker</strong> - Shows current position</li>
+<li><strong>Geolocator</strong> - Gets device location (NO API
+COST)</li>
+</ol>
+<hr />
+<h2 id="security-issues">⚠️ Security Issues</h2>
+<h3 id="current-risk">Current Risk</h3>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode dart"><code class="sourceCode dart"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co">// lib/const/google_map_key.dart</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> GoogleMapKey <span class="op">{</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">static</span> <span class="at">const</span> <span class="dt">String</span> gmaKey <span class="op">=</span> <span class="st">&#39;AIzaSyBv5ZleG1nnsiUn-YSSXeZ9MFzFYztimug&#39;</span>;</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p><strong>Problem</strong>: API key is visible in: - Source code
+(GitHub) - APK/IPA files - Anyone can extract and misuse</p>
+<h3 id="solution">Solution</h3>
+<ol type="1">
+<li><strong>Set API Key Restrictions</strong> in Google Cloud Console:
+<ul>
+<li>Android apps only</li>
+<li>iOS apps only</li>
+<li>Web domains only</li>
+</ul></li>
+<li><strong>Remove from code</strong> (for production):
+<ul>
+<li>Use Firebase Remote Config</li>
+<li>Backend server (recommended)</li>
+<li>Environment variables</li>
+</ul></li>
+</ol>
+<hr />
+<h2 id="optimization-tips">Optimization Tips</h2>
+<h3 id="reduce-api-calls">1. Reduce API Calls</h3>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode dart"><code class="sourceCode dart"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co">// ❌ Bad: Reloading map unnecessarily</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> _loadCurrentLocation() <span class="op">{</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  setState(() <span class="op">{</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    _isFetchingLocation <span class="op">=</span> <span class="cn">true</span>;</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span>);</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>  <span class="co">// Map reloads = API charge</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="co">// ✅ Good: Cache location, show cached map</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> _loadCurrentLocationOnce() <span class="op">{</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (_currentLatLng <span class="op">!=</span> <span class="cn">null</span>) <span class="kw">return</span>; <span class="co">// Skip if already loaded</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>  <span class="co">// Only load once</span></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<h3 id="disable-webdesktop-if-not-needed">2. Disable Web/Desktop if not
+needed</h3>
+<p>In <code>pubspec.yaml</code>, comment out unnecessary platforms:</p>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># web/    # Disable if not using</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="co"># linux/  # Disable if not using</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="co"># windows/ # Disable if not using</span></span></code></pre></div>
+<h3 id="use-static-maps-for-simple-cases">3. Use Static Maps for simple
+cases</h3>
+<ul>
+<li>Don’t need interactive map?</li>
+<li>Use Static Maps API (cheaper)</li>
+<li>Cost: $2.00 per 1,000 loads (vs $7.00)</li>
+</ul>
+<hr />
+<h2 id="monthly-cost-estimates">Monthly Cost Estimates</h2>
+<table>
+<thead>
+<tr>
+<th>Users</th>
+<th>Daily Opens</th>
+<th>Monthly Cost</th>
+<th>Annual</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1,000</td>
+<td>1x</td>
+<td>$165</td>
+<td>$1,980</td>
+</tr>
+<tr>
+<td>1,000</td>
+<td>5x</td>
+<td>$825</td>
+<td>$9,900</td>
+</tr>
+<tr>
+<td>5,000</td>
+<td>1x</td>
+<td>$822</td>
+<td>$9,864</td>
+</tr>
+<tr>
+<td>10,000</td>
+<td>1x</td>
+<td>$1,645</td>
+<td>$19,740</td>
+</tr>
+<tr>
+<td><strong>20,000</strong></td>
+<td><strong>1x</strong></td>
+<td><strong>$3,290</strong></td>
+<td><strong>$39,480</strong></td>
+</tr>
+<tr>
+<td>20,000</td>
+<td>5x</td>
+<td>$13,370</td>
+<td>$160,440</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="next-steps">Next Steps</h2>
+<h3 id="priority-1-security">Priority 1: Security</h3>
+<ul class="task-list">
+<li><label><input type="checkbox" />Set API key restrictions in
+GCP</label></li>
+<li><label><input type="checkbox" />Remove key from source
+code</label></li>
+<li><label><input type="checkbox" />Use environment
+variables</label></li>
+</ul>
+<h3 id="priority-2-cost-control">Priority 2: Cost Control</h3>
+<ul class="task-list">
+<li><label><input type="checkbox" />Set up billing alerts in
+GCP</label></li>
+<li><label><input type="checkbox" />Monitor usage in Cloud
+Console</label></li>
+<li><label><input type="checkbox" />Consider subscription plan if
+&gt;250K calls/month</label></li>
+</ul>
+<h3 id="priority-3-optimization">Priority 3: Optimization</h3>
+<ul class="task-list">
+<li><label><input type="checkbox" />Implement map caching</label></li>
+<li><label><input type="checkbox" />Reduce unnecessary
+reloads</label></li>
+<li><label><input type="checkbox" />Use subscription plan for
+predictable costs</label></li>
+</ul>
+<hr />
+<h2 id="gcp-console-links">GCP Console Links</h2>
+<ol type="1">
+<li><strong>Check Usage</strong>:
+https://console.cloud.google.com/billing/reports</li>
+<li><strong>Set Alerts</strong>:
+https://console.cloud.google.com/billing/alerting</li>
+<li><strong>API Keys</strong>:
+https://console.cloud.google.com/apis/credentials</li>
+<li><strong>Maps Platform</strong>:
+https://console.cloud.google.com/google/maps-apis</li>
+</ol>
+<hr />
+<h2 id="contact-support">Contact &amp; Support</h2>
+<ul>
+<li><strong>Pricing Questions</strong>:
+https://mapsplatform.google.com/contact-us/</li>
+<li><strong>Billing Issues</strong>:
+https://cloud.google.com/support</li>
+<li><strong>Quotas</strong>: 100,000 requests/second from GCP</li>
+</ul>
+<hr />
+<p><em>Last Updated: April 7, 2026</em><br />
+<em>Documentation Version: 1.0</em></p>
